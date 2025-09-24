@@ -1,0 +1,255 @@
+digraph MCP_Detailed {
+  rankdir=TB;
+  fontsize=10;
+  compound=true;
+  node [shape=box, fontname="Helvetica"];
+
+  // ===== Canais =====
+  subgraph cluster_channels {
+    label="Experiência / Canais";
+    color="#2a77c7";
+    style="filled";
+    fillcolor="#e8f4ff";
+    WebApp   [label="Web/App"];
+    Teams    [label="Teams/Slack"];
+    Whats    [label="WhatsApp"];
+    Voice    [label="Voice/Telefonia"];
+    Email    [label="E-mail"];
+    ExtAPI   [label="API Externa"];
+  }
+
+  // ===== Copilotos =====
+  subgraph cluster_copilots {
+    label="Copilotos por Domínio (ex.: Comercial, Jurídico, Dados)";
+    color="#2a77c7";
+    style="filled";
+    fillcolor="#d6ecff";
+    Copilot [label="Contexto do Domínio • Prompt kit • Guardrails locais • Memória curta"];
+  }
+
+  // ===== MCP Server =====
+  subgraph cluster_mcp {
+    label="MCP Server";
+    color="#3b8ad9";
+    style="filled";
+    fillcolor="#eef5ff";
+    FastAPI  [label="FastAPI Server\n• REST Endpoints • Auth Middleware • Logging • Health"];
+    Orchestrator [label="CrewAI Orchestrator\n• Intent Analysis • Strategy (seq/par) • Session Context"];
+  }
+
+  // ===== Segurança / Governança =====
+  subgraph cluster_security {
+    label="Segurança / Governança";
+    color="#0da3c6";
+    style="filled";
+    fillcolor="#eaf7ff";
+    AuthN   [label="Autenticação\nAPI Keys / JWT / Rate Limiting"];
+    AuthZ   [label="Autorização (RBAC)\nValidação por agente"];
+    Policy  [label="Policy Engine & Guardrails\nPII / Compliance / Limites"];
+    Sanitize[label="Sanitização de Inputs (SQL)"];
+  }
+
+  // ===== Memória & Sessões =====
+  subgraph cluster_memory {
+    label="Memória & Sessões";
+    color="#0da3c6";
+    style="filled";
+    fillcolor="#effbff";
+    MemShort [label="Memória Curta (sessão)"];
+    MemLong  [label="Memória Longa (user/domínio)"];
+    SessionRec [label="Gravação de Sessões & Interações\n(logs/conversa/contexto)"];
+    Cache    [label="Caching\n• LLM responses • SQL frequentes • Embeddings"];
+  }
+
+  // ===== Registry =====
+  subgraph cluster_registry {
+    label="Registry";
+    color="#0db1cd";
+    style="filled";
+    fillcolor="#e5fbff";
+    AgentsReg [label="Agents Registry"];
+    ToolsReg  [label="Tools Registry"];
+  }
+
+  // ===== Especialistas (Agents) =====
+  subgraph cluster_agents {
+    label="Especialistas (Agents)";
+    color="#1aa380";
+    style="filled";
+    fillcolor="#e6fff5";
+
+    // SQLAgent
+    subgraph cluster_sql {
+      label="SQLAgent";
+      color="#1aa380";
+      SQLCore  [label="Capacidades\n• NL→SQL • Execução BigQuery • Validação/Otimização"];
+      SQLTools [label="Tools\n• BigQuery Client • SQL Validator"];
+    }
+
+    // RAGAgent
+    subgraph cluster_rag {
+      label="RAGAgent";
+      color="#1aa380";
+      RAGCore  [label="Capacidades\n• Busca Semântica • Síntese • Contextualização"];
+      RAGTools [label="Tools\n• Vector Store • Embedding Models • Document Store"];
+    }
+
+    // ChartAgent
+    subgraph cluster_chart {
+      label="ChartAgent";
+      color="#1aa380";
+      ChartCore  [label="Capacidades\n• Gráficos Interativos • Análise p/ Viz • Exportações"];
+      ChartTools [label="Tools\n• Plotly • Matplotlib • Chart.js"];
+    }
+  }
+
+  // ===== LLM Layer =====
+  subgraph cluster_llm {
+    label="LLM Layer";
+    color="#6d58c2";
+    style="filled";
+    fillcolor="#efeaff";
+    LLMFactory [label="LLM Factory Pattern\n(env/Pydantic)"];
+    OpenAI     [label="OpenAI\nGPT-3.5 / GPT-4 / Turbo"];
+    Gemini     [label="Google Gemini / Vertex\nGemini Pro / Vision"];
+  }
+
+  // ===== Recursos / Sistemas =====
+  subgraph cluster_resources {
+    label="Recursos / Sistemas";
+    color="#cc7a00";
+    style="filled";
+    fillcolor="#fff1dc";
+    BigQuery [label="BigQuery", shape=oval];
+    DataPlex [label="Dataplex / Policy Tags", shape=oval];
+    ADSSO    [label="AD / SSO / IAP", shape=oval];
+    DocStore [label="Document Store", shape=oval];
+    Vector   [label="Vector Store / Embeddings", shape=oval];
+    GCS      [label="Cloud Storage", shape=oval];
+    KMS      [label="KMS (GCP)", shape=oval];
+    Secrets  [label="Secret Manager", shape=oval];
+    PubSub   [label="Pub/Sub", shape=oval];
+    LB       [label="Load Balancer", shape=oval];
+    K8s      [label="Kubernetes / Cloud Run", shape=oval];
+    CI       [label="CI/CD (GitHub Actions)\nBuild/Test/Deploy/Rollback", shape=oval];
+  }
+
+  // ===== Observabilidade =====
+  subgraph cluster_obs {
+    label="Observabilidade & Saúde";
+    color="#2a77c7";
+    style="filled";
+    fillcolor="#e9f2ff";
+    Logging [label="Logging Estruturado"];
+    Metrics [label="Métricas\nlatência/sucesso/CPU/mem/LLM"];
+    Health  [label="Health Checks\n/health"];
+    Tracing [label="Tracing & Custo\n(Langfuse/Langsmith)"];
+  }
+
+  // ===== Formatação de Resposta =====
+  subgraph cluster_response {
+    label="Formatação de Resposta";
+    color="#d48a00";
+    style="filled";
+    fillcolor="#fff7e6";
+    Synth    [label="Síntese de Resultados\n(agregação/mensagens)"];
+    Response [label="MCPResponse\nsuccess • data • metadata • error_message"];
+  }
+
+  // ===== Ligações =====
+  // Canais -> Copiloto -> FastAPI
+  WebApp  -> Copilot [label="mensagem"];
+  Teams   -> Copilot [label="mensagem"];
+  Whats   -> Copilot [label="mensagem"];
+  Voice   -> Copilot [label="mensagem"];
+  Email   -> Copilot [label="mensagem"];
+  ExtAPI  -> Copilot [label="mensagem"];
+  Copilot -> FastAPI [label="request"];
+
+  // MCP Server interno
+  FastAPI -> Orchestrator [label="MCPRequest"];
+
+  // Segurança/Governança
+  Orchestrator -> AuthN   [label="auth"];
+  Orchestrator -> AuthZ   [label="roles"];
+  Orchestrator -> Policy  [label="policy"];
+  Orchestrator -> Sanitize[label="sql inputs"];
+
+  // Memória & Sessões
+  Orchestrator -> MemShort  [label="context r/w"];
+  Orchestrator -> MemLong   [label="profile/history"];
+  Orchestrator -> SessionRec[label="events"];
+  Orchestrator -> Cache     [label="check/fill"];
+
+  // Registry
+  Orchestrator -> AgentsReg [label="select agent"];
+  Orchestrator -> ToolsReg  [label="select tools"];
+
+  // Invocação dos agentes
+  AgentsReg -> SQLCore;
+  AgentsReg -> RAGCore;
+  AgentsReg -> ChartCore;
+
+  // Agentes -> Tools
+  SQLCore   -> SQLTools;
+  RAGCore   -> RAGTools;
+  ChartCore -> ChartTools;
+
+  // Agentes -> LLM
+  SQLCore   -> LLMFactory [style=dashed, label="prompting"];
+  RAGCore   -> LLMFactory [style=dashed, label="prompting"];
+  ChartCore -> LLMFactory [style=dashed, label="NLG"];
+  LLMFactory -> OpenAI;
+  LLMFactory -> Gemini;
+
+  // Tools -> Recursos
+  SQLTools -> BigQuery [label="queries"];
+  SQLTools -> DataPlex;
+  RAGTools -> Vector   [label="similarity"];
+  RAGTools -> DocStore [label="fetch docs"];
+  ChartTools -> GCS    [label="export opcional"];
+
+  // Segurança de segredos/identidade
+  KMS    -> Secrets [style=dotted, label="keys"];
+  Secrets-> FastAPI [style=dotted, label="secrets"];
+  ADSSO  -> FastAPI [style=dotted, label="identidade"];
+
+  // Infra
+  LB -> FastAPI [label="traffic"];
+  K8s-> FastAPI [label="deploy"];
+  CI -> K8s     [label="CD"];
+  CI -> FastAPI [label="build"];
+
+  // Observabilidade (dashed)
+  FastAPI     -> Logging [style=dashed, label="logs"];
+  Orchestrator-> Logging [style=dashed, label="logs"];
+  SQLCore     -> Logging [style=dashed, label="logs"];
+  RAGCore     -> Logging [style=dashed, label="logs"];
+  ChartCore   -> Logging [style=dashed, label="logs"];
+
+  FastAPI     -> Metrics [style=dashed, label="metrics"];
+  Orchestrator-> Metrics [style=dashed, label="metrics"];
+  SQLCore     -> Metrics [style=dashed, label="metrics"];
+  RAGCore     -> Metrics [style=dashed, label="metrics"];
+  ChartCore   -> Metrics [style=dashed, label="metrics"];
+
+  FastAPI -> Health [style=dashed, label="/health"];
+
+  FastAPI     -> Tracing [style=dashed, label="traces"];
+  Orchestrator-> Tracing [style=dashed, label="traces"];
+  SQLCore     -> Tracing [style=dashed, label="traces"];
+  RAGCore     -> Tracing [style=dashed, label="traces"];
+  ChartCore   -> Tracing [style=dashed, label="traces"];
+
+  // Resposta
+  Orchestrator -> Synth    [label="results"];
+  Synth        -> Response [label="format"];
+
+  // Volta aos canais
+  Response -> WebApp;
+  Response -> Teams;
+  Response -> Whats;
+  Response -> Voice;
+  Response -> Email;
+  Response -> ExtAPI;
+}

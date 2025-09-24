@@ -1,0 +1,206 @@
+flowchart TB
+%% ========= LAYOUT =========
+classDef canais fill:#eee,stroke:#999,stroke-width:1px;
+classDef mcp fill:#fff7c7,stroke:#a68,stroke-width:1px;
+classDef seguranca fill:#ffe5e5,stroke:#b77,stroke-width:1px;
+classDef memoria fill:#eee6ff,stroke:#77f,stroke-width:1px;
+classDef registry fill:#e6ffff,stroke:#089,stroke-width:1px;
+classDef agents fill:#ecffec,stroke:#393,stroke-width:1px;
+classDef llm fill:#ead6ff,stroke:#726,stroke-width:1px;
+classDef recursos fill:#ffd8a8,stroke:#a65,stroke-width:1px;
+classDef obs fill:#dbe7ff,stroke:#468,stroke-width:1px;
+classDef resp fill:#fff2cc,stroke:#a80,stroke-width:1px;
+
+%% ========= CAMADA: EXPERIÊNCIA / CANAIS =========
+subgraph C[Experiência / Canais]
+  direction LR
+  W[Web/App]:::canais
+  T[Teams/Slack]:::canais
+  WA[WhatsApp]:::canais
+  V[Voice/Telefonia]:::canais
+  E[E-mail]:::canais
+  AX[API Externa]:::canais
+end
+
+%% ========= MCP SERVER =========
+subgraph S[MCP Server]
+  direction TB
+  API[FastAPI Server<br/>• REST Endpoints • Auth Middleware • Logging • Health]:::mcp
+  ORC[CrewAI Orchestrator<br/>• Intent Analysis • Strategy (seq/par) • Session Context]:::mcp
+  API --> ORC
+end
+
+%% ========= SEGURANÇA / GOVERNANÇA =========
+subgraph G[Segurança / Governança]
+  direction TB
+  AUTHN[Autenticação<br/>API Keys / JWT / Rate Limiting]:::seguranca
+  AUTHZ[Autorização (RBAC)<br/>Validação por agente]:::seguranca
+  POLICY[Policy Engine & Guardrails<br/>PII / Compliance / Limites]:::seguranca
+  SAN[Sanitização de Inputs (SQL)]:::seguranca
+end
+
+%% ========= MEMÓRIA & SESSÕES =========
+subgraph M[Memória & Sessões]
+  direction TB
+  MSM[Memória Curta (sessão)]:::memoria
+  MLG[Memória Longa (user/domínio)]:::memoria
+  SREC[Gravação de Sessões & Interações<br/>(logs/conversa/contexto)]:::memoria
+  CACHE[Caching<br/>LLM responses • SQL frequentes • Embeddings]:::memoria
+end
+
+%% ========= REGISTRY =========
+subgraph R[Registry]
+  direction TB
+  AREG[Agents Registry]:::registry
+  TREG[Tools Registry]:::registry
+end
+
+%% ========= ESPECIALISTAS (AGENTS) =========
+subgraph A[Especialistas (Agents)]
+  direction LR
+
+  subgraph ASQL[SQLAgent]
+    direction TB
+    SQLC[Capacidades<br/>• NL→SQL • Execução BigQuery • Validação/Otimização]:::agents
+    SQLT[Tools<br/>• BigQuery Client • SQL Validator]:::agents
+    SQLC --> SQLT
+  end
+
+  subgraph ARAG[RAGAgent]
+    direction TB
+    RAGC[Capacidades<br/>• Busca Semântica • Síntese • Contextualização]:::agents
+    RAGT[Tools<br/>• Vector Store • Embeddings • Document Store]:::agents
+    RAGC --> RAGT
+  end
+
+  subgraph ACHART[ChartAgent]
+    direction TB
+    CHC[Capacidades<br/>• Gráficos Interativos • Análise p/ Viz • Exportações]:::agents
+    CHT[Tools<br/>• Plotly • Matplotlib • Chart.js]:::agents
+    CHC --> CHT
+  end
+end
+
+%% ========= LLM LAYER =========
+subgraph L[LLM Layer]
+  direction TB
+  LLMF[LLM Factory Pattern<br/>(env/Pydantic)]:::llm
+  OAI[OpenAI<br/>GPT-3.5 / GPT-4 / Turbo]:::llm
+  GEM[Google Gemini / Vertex<br/>Gemini Pro / Vision]:::llm
+  LLMF --> OAI
+  LLMF --> GEM
+end
+
+%% ========= RECURSOS / SISTEMAS =========
+subgraph X[Recursos / Sistemas]
+  direction LR
+  BQ[(BigQuery)]:::recursos
+  DOCS[(Document Store)]:::recursos
+  VEC[(Vector Store / Embeddings)]:::recursos
+  GCS[(Cloud Storage)]:::recursos
+  KMS[(KMS GCP)]:::recursos
+  SECR[(Secret Manager)]:::recursos
+  PS[(Pub/Sub)]:::recursos
+  LB[(Load Balancer)]:::recursos
+  K8S[(Kubernetes / Cloud Run)]:::recursos
+  CI[(CI/CD – GitHub Actions)]:::recursos
+end
+
+%% ========= OBSERVABILIDADE =========
+subgraph O[Observabilidade & Saúde]
+  direction TB
+  LOG[Logging Estruturado]:::obs
+  MET[Métricas<br/>latência/sucesso/CPU/mem/LLM]:::obs
+  HL[Health Checks<br/>/health]:::obs
+  TR[Tracing & Custo<br/>(Langfuse/Langsmith)]:::obs
+end
+
+%% ========= FORMATAÇÃO DE RESPOSTA =========
+subgraph F[Formatação de Resposta]
+  direction TB
+  SYN[Síntese de Resultados<br/>(agregação/mensagens)]:::resp
+  RESP[MCPResponse<br/>success • data • metadata • error_message]:::resp
+  SYN --> RESP
+end
+
+%% ========= FLUXOS =========
+%% Canais -> API
+W -->|request| API
+T -->|request| API
+WA -->|request| API
+V -->|request| API
+E -->|request| API
+AX -->|request| API
+
+%% Orquestrador -> Segurança
+API -->|MCPRequest| ORC
+ORC -->|auth| AUTHN
+ORC -->|roles| AUTHZ
+ORC -->|policy| POLICY
+ORC -->|sql inputs| SAN
+
+%% Memória & Sessões
+ORC -->|context r/w| MSM
+ORC -->|profile/history| MLG
+ORC -->|events| SREC
+ORC -->|check/fill| CACHE
+
+%% Registry
+ORC -->|select agent| AREG
+ORC -->|select tools| TREG
+
+%% Invocação dos especialistas
+AREG --> SQLC
+AREG --> RAGC
+AREG --> CHC
+
+%% Especialistas -> LLM
+SQLC -. prompting .-> LLMF
+RAGC -. prompting .-> LLMF
+CHC  -. NLG .-> LLMF
+
+%% Especialistas -> Recursos via Tools
+SQLT -->|queries| BQ
+RAGT -->|similarity| VEC
+RAGT -->|fetch docs| DOCS
+CHT  -->|export opcional| GCS
+
+%% Segurança de segredos/cripto
+KMS -. keys .-> SECR
+SECR -. secrets .-> API
+
+%% Infra
+LB -->|traffic| API
+K8S -->|deploy| API
+CI -->|CD| K8S
+CI -->|build| API
+
+%% Observabilidade (dashed)
+API -. logs .-> LOG
+ORC  -. logs .-> LOG
+SQLC -. logs .-> LOG
+RAGC -. logs .-> LOG
+CHC  -. logs .-> LOG
+
+API -. metrics .-> MET
+ORC  -. metrics .-> MET
+SQLC -. metrics .-> MET
+RAGC -. metrics .-> MET
+CHC  -. metrics .-> MET
+
+API -. /health .-> HL
+
+API -. traces .-> TR
+ORC  -. traces .-> TR
+SQLC -. traces .-> TR
+RAGC -. traces .-> TR
+CHC  -. traces .-> TR
+
+%% Resposta -> Canais
+ORC -->|results| SYN
+RESP -->|MCPResponse| W
+RESP -->|MCPResponse| T
+RESP -->|MCPResponse| WA
+RESP -->|MCPResponse| V
+RESP -->|MCPResponse| E
+RESP -->|MCPResponse| AX
